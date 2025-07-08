@@ -107,7 +107,7 @@ st.set_page_config(page_title="Genmedia Playground", layout="wide")
 # Sidebar for configuration
 with st.sidebar:
     st.header("Configuration")
-    project_id = st.text_input("GCP Project ID", "duet-workshop-415205")
+    project_id = st.text_input("GCP Project ID", "")
     location = st.text_input("GCP Location", "us-central1")
 
     st.header("Prompting Tips")
@@ -246,10 +246,10 @@ with tab2:
                 response = generate_content(project_id, location, imagen_model_name, prompt_data)
                 if response:
                     st.success("Image generated successfully!")
-                    st.image(response._pil_image)
+                    img_bytes = response._image_bytes
+                    st.image(img_bytes)
 
                     # Add a download button for the image
-                    img_bytes = response._image_bytes
                     st.download_button(
                         label="Download Image",
                         data=img_bytes,
