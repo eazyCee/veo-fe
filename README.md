@@ -75,7 +75,7 @@ docker push $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME
 Deploy the application to Cloud Run using the image from Artifact Registry.
 
 ```bash
-gcloud run deploy $SERVICE_NAME \
+gcloud beta run deploy $SERVICE_NAME \
   --image=$REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME \
   --region=$REGION \
   --platform=managed \
