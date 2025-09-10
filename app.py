@@ -42,8 +42,13 @@ def generate_content(project_id: str, location: str, model_name: str, prompt_dat
 
                 keywords = [k for k in keywords if k]
 
+                persona = prompt_data.get('persona')
+                persona_instruction = ""
+                if persona and persona != "None":
+                    persona_instruction = f"The final video should be tailored for this persona: {persona}."
+
                 gemini_prompt = f"""
-You are an expert video prompt engineer for Google's Veo model. Your task is to construct the most effective and optimal prompt string using the following keywords. Every single keyword MUST be included. Synthesize them into a single, cohesive, and cinematic instruction. Do not add any new core concepts. Output ONLY the final prompt string, without any introduction or explanation. Mandatory Keywords: {",".join(keywords)}
+You are an expert video prompt engineer for Google's Veo model. Your task is to construct the most effective and optimal prompt string using the following keywords. {persona_instruction} Every single keyword MUST be included. Synthesize them into a single, cohesive, and cinematic instruction. Do not add any new core concepts. Output ONLY the final prompt string, without any introduction or explanation. Mandatory Keywords: {",".join(keywords)}
 """
                 gemini_model = "gemini-2.5-flash"
                 response = client.models.generate_content(
@@ -141,6 +146,16 @@ with tab1:
 
         if prompt_option == "Generate from keywords":
             st.subheader("Prompt Keywords")
+            personas = [
+                "None",
+                "Woman, 30 years old, Hiking, Nature, Lives in Jakarta, Housewife",
+                "Man, 25, Tech enthusiast, Lives in New York, Likes video games",
+                "Teenager, 16, High-school student, Loves pop music and fashion",
+                "Father, 40, Works in finance, Enjoys cars and sports",
+                "Grandmother, 65, Retired, Loves cooking and gardening",
+            ]
+            persona = st.selectbox("Select a Persona (Optional)", personas, key="veo_persona")
+
             col1, col2 = st.columns(2)
             with col1:
                 subject = st.text_input("Subject", key="veo_subject")
@@ -184,6 +199,7 @@ with tab1:
                             "temporal_elements": temporal_elements,
                             "sound_effects": sound_effects,
                             "dialogue": dialogue,
+                            "persona": persona,
                         })
                     else:
                         st.error("Please fill in at least Subject, Action, and Scene for keyword-based generation.")
@@ -258,4 +274,3 @@ with tab2:
                     )
         else:
             st.error("Please fill in all the configuration details and a prompt.")
-
