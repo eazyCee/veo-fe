@@ -27,11 +27,11 @@ Before you begin, ensure you have the following installed and configured:
 Export the following environment variables in your terminal, replacing the placeholder values with your specific GCP and application details.
 
 ```bash
-export PROJECT_ID="[your-gcp-project-id]"
-export REGION="[your-gcp-region]"
-export REPOSITORY="[your-artifact-registry-repo]"
-export IMAGE_NAME="[your-docker-image-name]"
-export SERVICE_NAME="[your-cloud-run-service-name]"
+export PROJECT_ID="sandbox-dce"
+export REGION="us-central1"
+export REPOSITORY="veo-fe"
+export IMAGE_NAME="veo-fe"
+export SERVICE_NAME="veo-fe"
 ```
 
 ## Deployment Steps

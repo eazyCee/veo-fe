@@ -6,6 +6,9 @@ from google.genai import types
 from vertexai.preview.vision_models import ImageGenerationModel
 import os
 import time
+from io import BytesIO
+import base64
+from PIL import Image
 
 def generate_content(project_id: str, location: str, model_name: str, prompt_data: dict, starting_image_path: str = None):
     """Generates content using a generative model."""
@@ -104,7 +107,34 @@ You are an expert video prompt engineer for Google's Veo model. Your task is to 
             st.error(f"An error occurred: {e}")
             return None
     else:
-        return f"Unknown model selected: {model_name}"
+        if model_name == "gemini-2.5-flash-image":
+            try:
+                client = genai.Client(vertexai=True, project=project_id, location=location)
+                # generation_model = ImageGenerationModel.from_pretrained(model_name)
+                content = []
+                image_paths = prompt_data.get('images')
+                text = prompt_data.get('prompt')
+                if image_paths:
+                    if(text):
+                        content.append(text)
+                    for image_path in image_paths:
+                        content.append(Image.open(image_path))
+                    response = client.models.generate_content(
+                        model=model_name,
+                        contents=content
+                    )
+                else:
+                    response = client.models.generate_content(
+                        prompt=prompt_data.get('prompt'),
+                    )
+                # Return the first generated image
+                
+                return response
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
+                return None
+        else:
+            return f"Unknown model selected: {model_name}"
 
 # Page configuration
 st.set_page_config(page_title="Genmedia Playground", layout="wide")
@@ -128,7 +158,7 @@ with st.sidebar:
 # Main content
 st.title("VEO & Imagen Prompt Interface")
 
-tab1, tab2 = st.tabs(["VEO", "Imagen"])
+tab1, tab2, tab3 = st.tabs(["VEO", "Imagen", "Gemini 2.5 Flash Image (Nano Banana)"])
 
 with tab1:
     try:
@@ -272,5 +302,47 @@ with tab2:
                         file_name="generated_image.png",
                         mime="image/png"
                     )
+        else:
+            st.error("Please fill in all the configuration details and a prompt.")
+
+with tab3:
+    st.header("Gemini 2.5 Flash Image (Nano Banana)")
+    gemini_image_model_name = st.selectbox(
+        "Choose a Gemini Image model:",
+        ("gemini-2.5-flash-image",),  # Example model versions
+        key="gemini_image_model"
+    )
+    gemini_image_prompt = st.text_area("Enter your prompt for Gemini Image:", height=200, key="gemini_image_prompt")
+    gemini_image_uploads = st.file_uploader("Upload images for editing (optional)", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
+
+    if st.button("Generate Gemini Image Content"):
+        if project_id and location and gemini_image_prompt:
+            prompt_data = {
+                "prompt": gemini_image_prompt,
+                "images": [],
+            }
+            if gemini_image_uploads:
+                for image in gemini_image_uploads:
+                    # Save the uploaded file to a temporary location
+                    with open(os.path.join("tempDir",image.name),"wb") as f:
+                        f.write(image.getbuffer())
+                    prompt_data["images"].append(os.path.join("tempDir",image.name))
+            with st.spinner("Generating content..."):
+                response = generate_content(project_id, location, gemini_image_model_name, prompt_data)
+                if response:
+                    for part in response.candidates[0].content.parts:
+                        if part.text is not None:
+                            st.write(part.text)
+                        elif part.inline_data is not None:
+                            st.success("Image generated successfully!")
+                            st.image(BytesIO(part.inline_data.data))
+
+                            # Add a download button for the image
+                            st.download_button(
+                                label="Download Image",
+                                data=BytesIO(part.inline_data.data),
+                                file_name="generated_image.png",
+                                mime="image/png"
+                            )
         else:
             st.error("Please fill in all the configuration details and a prompt.")
